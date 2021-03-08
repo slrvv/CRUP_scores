@@ -1,0 +1,32 @@
+
+DIRDATA=/project/CRUP_scores/ENCODE/Encode_data/Pair_ended
+CELL=$1
+
+for DIR in H3K4me1 H3K4me3 H3K27ac Controls
+do
+  my_array=($(ls $DIRDATA/$CELL/$DIR))
+  # echo $DIRDATA/$CELL/$DIR/${my_array[0]}
+  # echo $DIRDATA/$CELL/$DIR/${my_array[1]}
+  samtools merge $DIRDATA/$CELL/$DIR/$DIR.bam $DIRDATA/$CELL/$DIR/${my_array[0]} $DIRDATA/$CELL/$DIR/${my_array[1]}
+
+done
+
+echo "Merge done.... Renaming Controls"
+mv $DIRDATA/$CELL/Controls/Controls.bam $DIRDATA/$CELL/Controls/input.bam
+
+echo "Indexing files"
+##loop for indexing alignments
+for FILE in $DIRDATA/$CELL/H3K4me3/H3K4me3.bam $DIRDATA/$CELL/H3K27ac/H3K27ac.bam $DIRDATA/$CELL/H3K4me1/H3K4me1.bam $DIRDATA/$CELL/Controls/input.bam
+do
+  samtools index $FILE $FILE.bai
+done
+
+echo "Creating info.txt"
+###create the info.txt for crup
+INFOFILE=$DIRDATA/$CELL/info.txt
+
+echo -e "feature\tbam_file\tbam_file_input" > $INFOFILE
+for HM in H3K4me3 H3K27ac H3K4me1
+do
+  echo -e "$HM\t$DIRDATA/$CELL/$HM/$HM.bam\t$DIRDATA/$CELL/Controls/input.bam" >> $INFOFILE
+done
